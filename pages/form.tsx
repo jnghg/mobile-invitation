@@ -1,5 +1,7 @@
 import type { NextPage } from "next";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import AddressModal from "../components/addrModal";
 
 const Form: NextPage = () => {
   const date = new Date();
@@ -8,10 +10,27 @@ const Form: NextPage = () => {
   const day = date.getDate();
   const today = year + "-" + (month > 10 ? month : "0" + month) + "-" + day;
 
-  const [radio, setRadio] = useState<String>("am");
+  const [isAddressClick, setIsAddressClick] = useState(false);
+  const { register, handleSubmit, setValue } = useForm();
+
+  // 주소검색콜백
+  const onCompletePost = (post: any) => {
+    setValue("address", post.address);
+    setIsAddressClick(false);
+  };
+
+  const onClickFindPost = () => {
+    console.log("button ", isAddressClick);
+    setIsAddressClick(true);
+  };
+
+  const onValid = () => {};
 
   return (
-    <form className="justify-start space-y-10 px-5 py-5">
+    <form
+      className="justify-start space-y-10 px-5 py-5"
+      onSubmit={handleSubmit(onValid)}
+    >
       {/* 주문자 정보 */}
       <div className="space-y-5 ">
         <div className="border-b-2 pb-2 text-xl font-medium">주문자 정보</div>
@@ -184,38 +203,80 @@ const Form: NextPage = () => {
       <div className="space-y-5">
         <div className="border-b-2 pb-2 text-xl font-medium">예식장 정보</div>
 
-        <div className="flex justify-between items-center">
-          <div>예식 일시</div>
+        <div>예식 일시</div>
+        <div className="flex justify-between">
           <div>
             <input
               type="date"
               name="date"
               defaultValue={today}
-              className="rounded-md border border-slate-400"
+              className="rounded-md border border-slate-400 w-44"
             />
           </div>
           <div className="space-x-2">
-            <input
-              type="radio"
-              name="time"
-              value="am"
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setRadio(event.target.value)
-              }
-              checked={radio === "am"}
-            />
-            <label htmlFor="am">오전</label>
-            <input
-              type="radio"
-              name="time"
-              value="pm"
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setRadio(event.target.value)
-              }
-              checked={radio === "pm"}
-            />
-            <label htmlFor="pm">오후</label>
+            <select className="rounded-md border border-slate-400" name="time">
+              <option value="am">오전</option>
+              <option value="pm">오후</option>
+            </select>
           </div>
+          <div className="flex items-center space-x-2">
+            <input
+              className="w-16 rounded-md border border-slate-400"
+              type="text"
+              name="hour"
+            />
+            <label className="block">시</label>
+            <input
+              className="w-16 rounded-md border border-slate-400"
+              type="text"
+              name="min"
+            />
+            <label className="block">분</label>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div>예식장명</div>
+          <input
+            className="rounded-md w-full border border-slate-400"
+            type="text"
+            placeholder="ex) 와우컨벤션"
+          />
+        </div>
+        <div className="space-y-2">
+          <div>홀 상세정보</div>
+          <input
+            className="rounded-md w-full border border-slate-400"
+            type="text"
+            placeholder="ex) 3층 크리스탈홀"
+          />
+        </div>
+        <div className="space-y-2">
+          <div>예식장 연락처</div>
+          <input
+            className="rounded-md w-full border border-slate-400"
+            type="text"
+            placeholder="'-'없이 숫자만 입력하세요"
+          />
+        </div>
+        <div className="space-y-2">
+          <div>예식장 주소</div>
+          <div className="flex">
+            <input
+              className="rounded-md w-full border border-slate-400"
+              type="text"
+              placeholder="주소입력"
+              {...register("address")}
+            />
+            <button
+              className="rounded-md w-24 ml-2 border border-slate-400 bg-blue-400"
+              onClick={onClickFindPost}
+            >
+              주소검색
+            </button>
+          </div>
+          {isAddressClick ? (
+            <AddressModal onCompletePost={onCompletePost} />
+          ) : null}
         </div>
       </div>
     </form>
