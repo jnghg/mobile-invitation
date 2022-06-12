@@ -1,13 +1,9 @@
 import type { NextPage } from "next";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 
 const Home: NextPage = () => {
-  return (
-    <div className="">
-      <span>span1</span>
-      <div>div1</div>
-      <div>div2</div>
-    </div>
-  );
+  return "Hello";
 };
 
 export default Home;
