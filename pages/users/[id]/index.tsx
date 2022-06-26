@@ -1,3 +1,4 @@
+import { cls } from "@libs/client/utils";
 import type { NextPage } from "next";
 import Image from "next/image";
 import { useState } from "react";
@@ -67,12 +68,17 @@ const Users: NextPage = () => {
     comments: [
       {
         name: "유리",
-        comment: "축하해~",
+        comment:
+          "축하축하축하츄 축하축하축하츄 축하축하축하츄 축하축하축하츄 축하축하축하츄 축하축하축하츄",
         date: "2022-01-12",
       },
       {
         name: "효진",
-        comment: "결혼이라니~",
+        comment: `너와 결혼까지 생각했어! 같은집 같은방에서!! 
+          워워어어어어어엉어 히이이이이이이이이이이이이이이이이이이이이이이이
+          사아아아아아아아아아아아아아아아아
+          오오오오오오오오오오오오오오오오오
+          이이이이이이이이`,
         date: "2022-05-11",
       },
       {
@@ -221,13 +227,33 @@ const Users: NextPage = () => {
           <div className="space-y-5">
             {message.comments.map((message, key) => (
               <div key={key} className="bg-white rounded-lg py-5 px-5 pt-10">
-                <div className="flex space-x-10 justify-start items-center">
+                <div className="flex pl-5 space-x-10 justify-start items-center">
                   <div className="font-medium">{message.name}</div>
-                  <div className="text-sm font-thin">{message.comment}</div>
+                  <div className="w-3/4 px-12 text-left text-sm font-thin whitespace-pre-line">
+                    {message.comment}
+                  </div>
                 </div>
-                <div className="text-right font-thin">{message.date}</div>
+                <div className="flex justify-end font-thin">{message.date}</div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* 페이징처리 */}
+        <div className="px-10">
+          <div className="flex justify-between items-center">
+            <div className="font-thin">
+              <span>&lt;</span>
+              {[1, 2, 3].map((i, key) => (
+                <span key={key} className="px-5">
+                  <span className={cls(i === 1 ? "font-medium" : "")}>{i}</span>
+                </span>
+              ))}
+              <span>&gt;</span>
+            </div>
+            <button className="float-right text-sm hover:bg-gray-400 bg-gray-300 py-1 px-4 rounded-lg shadow-sm">
+              작성하기
+            </button>
           </div>
         </div>
       </div>
