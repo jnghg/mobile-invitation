@@ -19,12 +19,20 @@ const Form: NextPage = () => {
     setIsAddressClick(false);
   };
 
+  // 주소검색
   const onClickFindPost = () => {
-    console.log("button ", isAddressClick);
-    setIsAddressClick(true);
+    setIsAddressClick(!isAddressClick);
   };
 
-  const onValid = () => {};
+  // 저장
+  const onValid = () => {
+    console.log("저장");
+  };
+
+  // 취소
+  const onclickCancel = () => {
+    console.log("취소");
+  };
 
   return (
     <form
@@ -268,7 +276,7 @@ const Form: NextPage = () => {
               {...register("address")}
             />
             <button
-              className="rounded-md w-24 ml-2 border border-slate-400 bg-blue-400"
+              className="rounded-md w-24 ml-2 border border-slate-300 bg-slate-300 hover:bg-slate-400"
               onClick={onClickFindPost}
             >
               주소검색
@@ -278,6 +286,20 @@ const Form: NextPage = () => {
             <AddressModal onCompletePost={onCompletePost} />
           ) : null}
         </div>
+      </div>
+
+      {/* 버튼 */}
+      <div className="flex py-5 space-x-3">
+        <button
+          type="button"
+          className="bg-slate-200 py-2 px-2 rounded-md w-1/2 hover:bg-slate-300 shadow-md font-medium text-lg"
+          onClick={onclickCancel}
+        >
+          취소
+        </button>
+        <button className="bg-blue-300 py-2 px-2 rounded-md w-1/2 hover:bg-blue-400 shadow-md font-medium text-lg">
+          저장
+        </button>
       </div>
     </form>
   );

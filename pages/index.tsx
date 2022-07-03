@@ -1,9 +1,14 @@
 import type { NextPage } from "next";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
 
 const Home: NextPage = () => {
+  const router = useRouter();
+
+  const linkToDetail = () => {
+    router.push("/users/1");
+  };
+
   return (
     <>
       <div className="relative">
@@ -32,7 +37,10 @@ const Home: NextPage = () => {
             {/* 리스트 */}
             <div className="relative">
               <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-md shadow-lg hover:border-2 cursor-pointer">
+                <div
+                  className="rounded-md shadow-lg hover:border-2 cursor-pointer"
+                  onClick={linkToDetail}
+                >
                   <Image
                     className="rounded-lg"
                     src={"/wed4.jpeg"}

@@ -2,18 +2,109 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["referentialIntegrity"]
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider             = "mysql"
+  url                  = env("DATABASE_URL")
+  referentialIntegrity = "prisma"
 }
 
+// 주문자 정보
 model User {
-  id        Int      @id @default(autoincrement())
-  phone     String?  @unique
-  name      String
+  id    String @id @default(uuid())
+  phone String @unique
+  name  String
+  email String @unique
+
+  comments    Comment[]
+  groom       Groom[]
+  bride       Bride[]
+  traffic     Traffic[]
+  weddingInfo WeddingInfo[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+}
+
+// 웨딩 정보
+model WeddingInfo {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+
+  weddingInvitation     String @db.MediumText
+  weddingDate           String
+  weddingHallName       String
+  weddingHallDetailName String
+  weddingHallCallNumber String
+  weddingHallAddress    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 신랑 정보
+model Groom {
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+
+  name        String
+  engName     String?
+  fatherName  String?
+  motherName  String?
+  fatherPhone String?
+  motherPhone String?
+  phone       String  @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 신부 정보
+model Bride {
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+
+  name        String
+  engName     String?
+  fatherName  String?
+  motherName  String?
+  fatherPhone String?
+  motherPhone String?
+  phone       String  @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 댓글
+model Comment {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  commentUser String
+  comment     String   @db.MediumText
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 교통정보
+model Traffic {
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  bus    String?
+  subway String?
+  car    String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
