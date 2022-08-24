@@ -1,8 +1,12 @@
 import type { NextPage } from "next";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { FieldError, useForm } from "react-hook-form";
 import AddressModal from "../components/addrModal";
+import moment from "moment";
+
+import client from "@libs/server/client";
 
 interface PreviewImage {
   preview: string;
@@ -11,19 +15,51 @@ interface PreviewImage {
   lastModified: number;
 }
 
-const Form: NextPage = () => {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const today = year + "-" + (month > 10 ? month : "0" + month) + "-" + day;
+interface FormType {
+  photo: any;
+  galleryPhoto: any;
+  orderName: string;
+  orderPhone: string;
+  orderEmail: string;
+  groomName: string;
+  groomPhone: string;
+  brideName: string;
+  bridePhone: string;
+  groomFather: string;
+  groomFatherName: string;
+  groomFatherPhone: string;
+  brideFather: string;
+  brideFatherName: string;
+  brideFatherPhone: string;
+  wedDate: string;
+  wedDateType: string;
+  wedDateHour: string;
+  wedDateMin: string;
+  wedHallName: string;
+  wedHallDetail: string;
+  wedPhone: string;
+  wedAddress: string;
+  wedAddressDetail: string;
+}
 
-  const { register, handleSubmit, setValue, watch } = useForm();
+const Form: NextPage<{ data: FormType }> = ({ data }) => {
+  const date = moment(new Date());
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<FormType>({
+    // mode: "onBlur",
+  });
   const [isAddressClick, setIsAddressClick] = useState(false);
+  const router = useRouter();
 
   // 주소검색콜백
   const onCompletePost = (post: any) => {
-    setValue("address", post.address);
+    setValue("wedAddress", post.address);
     setIsAddressClick(false);
   };
 
@@ -33,13 +69,64 @@ const Form: NextPage = () => {
   };
 
   // 저장
-  const onValid = () => {
-    console.log("저장");
+  const onValid = async (data: FormType) => {
+    console.log("저장", data);
+
+    // 메인사진
+    if (photo && photo.length > 0) {
+      const { uploadURL } = await (await fetch(`/api/files`)).json();
+      const formData = new FormData();
+
+      formData.append("file", photo[0]);
+
+      const {
+        result: { id },
+      } = await (
+        await fetch(uploadURL, {
+          method: "POST",
+          body: formData,
+        })
+      ).json();
+
+      console.log("메인사진 이미지 id : ", id);
+    }
+
+    // 갤러리 사진
+    if (galleryPhoto && galleryPhoto.length > 0) {
+      for (let i = 0; i < galleryPhoto.length; i++) {
+        const { uploadURL } = await (await fetch(`/api/files`)).json();
+        const formData = new FormData();
+
+        formData.append("file", galleryPhoto[i]);
+
+        const {
+          result: { id },
+        } = await (
+          await fetch(uploadURL, {
+            method: "POST",
+            body: formData,
+          })
+        ).json();
+
+        console.log("갤러리사진 이미지 id : ", id);
+      }
+    }
+
+    console.log("등록 끝 ");
+  };
+
+  // validate
+  const onInvalid = () => {
+    console.log("validate");
   };
 
   // 취소
   const onclickCancel = () => {
-    console.log("취소");
+    if (confirm("작성을 멈추고 돌아가시겠습니까?")) {
+      router.push("/");
+    } else {
+      return false;
+    }
   };
 
   const photo = watch("photo");
@@ -59,6 +146,11 @@ const Form: NextPage = () => {
       for (let i = 0; i < galleryPhoto.length; i++) {
         let file = galleryPhoto[i];
 
+        if (file.size > 2000000) {
+          alert("이미지 용량은 최대 2MB 입니다.");
+          return;
+        }
+
         setGalleryPhotoPreview((previewImage) => [
           ...previewImage,
           {
@@ -72,13 +164,11 @@ const Form: NextPage = () => {
     }
   }, [photo, galleryPhoto]);
 
-  // 갤러리사진 클릭
-  const galleryPhotoClick = () => {};
-
   // 메인사진 삭제
   const deleteMainPhoto = () => {
     setPhotoPreview("");
     setValue("photo", "");
+    URL.revokeObjectURL(photo[0]);
   };
 
   // 갤러리사진 삭제
@@ -94,49 +184,75 @@ const Form: NextPage = () => {
     let file = {};
 
     Object.keys(galleryPhoto).forEach((key) => {
-      if (
-        galleryPhoto[key].name !== deleteImage.name &&
-        galleryPhoto[key].size !== deleteImage.size &&
-        galleryPhoto[key].lastModified !== deleteImage.lastModified
-      ) {
+      if (galleryPhoto[key].preview !== deleteImage.preview) {
         file = {
           ...file,
           [key]: galleryPhoto[key],
         };
+      } else {
+        URL.revokeObjectURL(galleryPhoto[key]);
       }
     });
 
     setValue("galleryPhoto", file);
   };
 
+  console.log("return : ", data);
+
   return (
     <form
       className="justify-start space-y-10 px-5 py-5"
-      onSubmit={handleSubmit(onValid)}
+      onSubmit={handleSubmit(onValid, onInvalid)}
+      encType={"multipart/formdata"}
     >
       {/* 주문자 정보 */}
       <div className="space-y-5 ">
         <div className="border-b-2 pb-2 text-xl font-medium">주문자 정보</div>
         <div className="grid grid-cols-1 gap-4">
           <div className="space-y-2">
-            <div>주문자명</div>
+            <div>*주문자명</div>
             <input
+              {...register("orderName", {
+                required: "주문자명은 필수입니다.",
+              })}
               className="rounded-md w-full border border-slate-400"
               type="text"
               placeholder="이름"
             />
+            {errors && errors.orderName ? (
+              <div className="text-sm text-red-500 ml-1">
+                {errors.orderName.message}
+              </div>
+            ) : (
+              ""
+            )}
           </div>
           <div className="space-y-2">
-            <div>휴대폰 번호</div>
+            <div>*휴대폰 번호</div>
             <input
+              {...register("orderPhone", {
+                required: "휴대폰번호는 필수입니다.",
+                maxLength: {
+                  message: "자리수를 확인해주세요",
+                  value: 11,
+                },
+              })}
               className="rounded-md w-full border border-slate-400"
-              type="number"
+              type="text"
               placeholder="'-'없이 숫자만 입력하세요"
             />
+            {errors && errors.orderPhone ? (
+              <div className="text-sm text-red-500 ml-1">
+                {errors.orderPhone.message}
+              </div>
+            ) : (
+              ""
+            )}
           </div>
           <div className="space-y-2">
             <div>이메일 주소</div>
             <input
+              {...register("orderEmail")}
               className="rounded-md w-full border border-slate-400"
               type="email"
               placeholder="you@example.com"
@@ -153,6 +269,7 @@ const Form: NextPage = () => {
             <div>신랑</div>
             <div className="flex justify-between">
               <input
+                {...register("groomName")}
                 className="rounded-md border border-slate-400 w-1/3"
                 type="text"
                 placeholder="이름"
@@ -161,6 +278,7 @@ const Form: NextPage = () => {
                 +82
               </div>
               <input
+                {...register("groomPhone")}
                 className="rounded-r-md border border-slate-400 w-2/3"
                 type="text"
                 placeholder="'-'없이 숫자만 입력하세요"
@@ -171,6 +289,7 @@ const Form: NextPage = () => {
             <div>신부</div>
             <div className="flex justify-between">
               <input
+                {...register("brideName")}
                 className="rounded-md border border-slate-400 w-1/3"
                 type="text"
                 placeholder="이름"
@@ -179,6 +298,7 @@ const Form: NextPage = () => {
                 +82
               </div>
               <input
+                {...register("bridePhone")}
                 className="rounded-r-md border border-slate-400 w-2/3"
                 type="text"
                 placeholder="'-'없이 숫자만 입력하세요"
@@ -196,11 +316,13 @@ const Form: NextPage = () => {
             <div>신랑측</div>
             <div className="flex justify-between">
               <input
+                {...register("groomFather")}
                 className="rounded-md border border-slate-400 w-1/3"
                 type="text"
                 placeholder="아버지"
               />
               <input
+                {...register("groomFatherName")}
                 className="rounded-md border border-slate-400 w-1/3 ml-3"
                 type="text"
                 placeholder="이름"
@@ -209,6 +331,7 @@ const Form: NextPage = () => {
                 +82
               </div>
               <input
+                {...register("groomFatherPhone")}
                 className="rounded-r-md border border-slate-400 w-2/3"
                 type="text"
                 placeholder="'-'없이 숫자만 입력하세요"
@@ -216,11 +339,13 @@ const Form: NextPage = () => {
             </div>
             <div className="flex justify-between">
               <input
+                {...register("groomMother")}
                 className="rounded-md border border-slate-400 w-1/3"
                 type="text"
                 placeholder="어머니"
               />
               <input
+                {...register("groomMotherName")}
                 className="rounded-md border border-slate-400 w-1/3 ml-3"
                 type="text"
                 placeholder="이름"
@@ -229,6 +354,7 @@ const Form: NextPage = () => {
                 +82
               </div>
               <input
+                {...register("groomMotherPhone")}
                 className="rounded-r-md border border-slate-400 w-2/3"
                 type="text"
                 placeholder="'-'없이 숫자만 입력하세요"
@@ -240,11 +366,13 @@ const Form: NextPage = () => {
             <div>신부측</div>
             <div className="flex justify-between">
               <input
+                {...register("brideFather")}
                 className="rounded-md border border-slate-400 w-1/3"
                 type="text"
                 placeholder="아버지"
               />
               <input
+                {...register("brideFatherName")}
                 className="rounded-md border border-slate-400 w-1/3 ml-3"
                 type="text"
                 placeholder="이름"
@@ -253,6 +381,7 @@ const Form: NextPage = () => {
                 +82
               </div>
               <input
+                {...register("brideFatherPhone")}
                 className="rounded-r-md border border-slate-400 w-2/3"
                 type="text"
                 placeholder="'-'없이 숫자만 입력하세요"
@@ -260,11 +389,13 @@ const Form: NextPage = () => {
             </div>
             <div className="flex justify-between">
               <input
+                {...register("brideMother")}
                 className="rounded-md border border-slate-400 w-1/3"
                 type="text"
                 placeholder="어머니"
               />
               <input
+                {...register("brideMotherName")}
                 className="rounded-md border border-slate-400 w-1/3 ml-3"
                 type="text"
                 placeholder="이름"
@@ -273,6 +404,7 @@ const Form: NextPage = () => {
                 +82
               </div>
               <input
+                {...register("brideMotherPhone")}
                 className="rounded-r-md border border-slate-400 w-2/3"
                 type="text"
                 placeholder="'-'없이 숫자만 입력하세요"
@@ -290,29 +422,32 @@ const Form: NextPage = () => {
         <div className="flex justify-between">
           <div>
             <input
+              {...register("wedDate")}
               type="date"
-              name="date"
-              defaultValue={today}
+              defaultValue={date.format("YYYY-MM-DD")}
               className="rounded-md border border-slate-400 w-44"
             />
           </div>
           <div className="space-x-2">
-            <select className="rounded-md border border-slate-400" name="time">
+            <select
+              className="rounded-md border border-slate-400"
+              {...register("wedDateType")}
+            >
               <option value="am">오전</option>
               <option value="pm">오후</option>
             </select>
           </div>
           <div className="flex items-center space-x-2">
             <input
+              {...register("wedDateHour")}
               className="w-16 rounded-md border border-slate-400"
               type="text"
-              name="hour"
             />
             <label className="block">시</label>
             <input
+              {...register("wedDateMin")}
               className="w-16 rounded-md border border-slate-400"
               type="text"
-              name="min"
             />
             <label className="block">분</label>
           </div>
@@ -320,6 +455,7 @@ const Form: NextPage = () => {
         <div className="space-y-2">
           <div>예식장명</div>
           <input
+            {...register("wedHallName")}
             className="rounded-md w-full border border-slate-400"
             type="text"
             placeholder="ex) 와우컨벤션"
@@ -328,6 +464,7 @@ const Form: NextPage = () => {
         <div className="space-y-2">
           <div>홀 상세정보</div>
           <input
+            {...register("wedHallDetail")}
             className="rounded-md w-full border border-slate-400"
             type="text"
             placeholder="ex) 3층 크리스탈홀"
@@ -336,6 +473,7 @@ const Form: NextPage = () => {
         <div className="space-y-2">
           <div>예식장 연락처</div>
           <input
+            {...register("wedPhone")}
             className="rounded-md w-full border border-slate-400"
             type="text"
             placeholder="'-'없이 숫자만 입력하세요"
@@ -348,14 +486,23 @@ const Form: NextPage = () => {
               className="rounded-md w-full border border-slate-400"
               type="text"
               placeholder="주소입력"
-              {...register("address")}
+              {...register("wedAddress")}
             />
             <button
+              type="button"
               className="rounded-md w-24 ml-2 border border-slate-300 bg-slate-300 hover:bg-slate-400"
               onClick={onClickFindPost}
             >
               주소검색
             </button>
+          </div>
+          <div>
+            <input
+              className="rounded-md w-full border border-slate-400"
+              type="text"
+              placeholder="상세주소"
+              {...register("wedAddressDetail")}
+            />
           </div>
           {isAddressClick ? (
             <AddressModal onCompletePost={onCompletePost} />
@@ -456,7 +603,7 @@ const Form: NextPage = () => {
               <div className="flex justify-center space-x-3">
                 {galleryPhotoPreview ? (
                   <div
-                    className="cursor-pointer hover:ring-2 rounded-lg"
+                    className="cursor-pointer hover:ring-2 rounded-lg mt-3"
                     onClick={() => deleteGalleryPhoto(image)}
                   >
                     <svg
@@ -504,10 +651,7 @@ const Form: NextPage = () => {
               </div>
             </div>
           ))}
-          <label
-            onClick={galleryPhotoClick}
-            className="w-40 h-40 first:cursor-pointer text-gray-600 hover:border-orange-500 hover:text-orange-500 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-md"
-          >
+          <label className="w-40 h-40 first:cursor-pointer text-gray-600 hover:border-orange-500 hover:text-orange-500 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-md">
             <svg
               className="h-12 w-12"
               stroke="currentColor"
@@ -549,5 +693,15 @@ const Form: NextPage = () => {
     </form>
   );
 };
+
+export async function getServerSideProps() {
+  const data = await client?.user.findMany({});
+
+  return {
+    props: {
+      data: JSON.parse(JSON.stringify(data)),
+    },
+  };
+}
 
 export default Form;

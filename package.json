@@ -12,6 +12,7 @@
     "@prisma/client": "^3.11.1",
     "@tailwindcss/forms": "^0.4.0",
     "@types/navermaps": "^3.0.13",
+    "moment": "^2.29.4",
     "next": "12.1.0",
     "react": "17.0.2",
     "react-daum-postcode": "^3.0.1",
