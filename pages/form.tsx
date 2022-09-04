@@ -197,7 +197,7 @@ const Form: NextPage<{ data: FormType }> = ({ data }) => {
     setValue("galleryPhoto", file);
   };
 
-  console.log("return : ", data);
+  console.log("받아온 데이터 :: ", data);
 
   return (
     <form
@@ -695,7 +695,7 @@ const Form: NextPage<{ data: FormType }> = ({ data }) => {
 };
 
 export async function getServerSideProps() {
-  const data = await client?.user.findMany({});
+  const data = await client.user.findMany();
 
   return {
     props: {
